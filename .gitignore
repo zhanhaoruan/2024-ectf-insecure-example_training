@@ -1,7 +1,6 @@
 ## Project .gitignore ##
 
 .DS_Store
-.vscode/
 **/gcc
 
 !device/lib
