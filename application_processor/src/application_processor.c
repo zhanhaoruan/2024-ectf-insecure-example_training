@@ -387,7 +387,7 @@ void boot() {
 // Compare the entered PIN to the correct PIN
 int validate_pin() {
     char buf[50];
-    recv_input("Enter pin: ", buf);
+    recv_input("Enter pin: ", buf, 50);
     if (!strcmp(buf, AP_PIN)) {
         print_debug("Pin Accepted!\n");
         return SUCCESS_RETURN;
@@ -399,7 +399,7 @@ int validate_pin() {
 // Function to validate the replacement token
 int validate_token() {
     char buf[50];
-    recv_input("Enter token: ", buf);
+    recv_input("Enter token: ", buf, 50);
     if (!strcmp(buf, AP_TOKEN)) {
         print_debug("Token Accepted!\n");
         return SUCCESS_RETURN;
@@ -410,6 +410,7 @@ int validate_token() {
 
 // Boot the components and board if the components validate
 void attempt_boot() {
+    // need to verify 
     if (validate_components()) {
         print_error("Components could not be validated\n");
         return;
@@ -446,9 +447,9 @@ void attempt_replace() {
     uint32_t component_id_in = 0;
     uint32_t component_id_out = 0;
 
-    recv_input("Component ID In: ", buf);
+    recv_input("Component ID In: ", buf, 50);
     sscanf(buf, "%x", &component_id_in);
-    recv_input("Component ID Out: ", buf);
+    recv_input("Component ID Out: ", buf, 50);
     sscanf(buf, "%x", &component_id_out);
 
     // Find the component to swap out
@@ -480,7 +481,7 @@ void attempt_attest() {
         return;
     }
     uint32_t component_id;
-    recv_input("Component ID: ", buf);
+    recv_input("Component ID: ", buf, 50);
     sscanf(buf, "%x", &component_id);
     if (attest_component(component_id) == SUCCESS_RETURN) {
         print_success("Attest\n");
@@ -500,7 +501,7 @@ int main() {
     // Handle commands forever
     char buf[100];
     while (1) {
-        recv_input("Enter Command: ", buf);
+        recv_input("Enter Command: ", buf, 100);
 
         // Execute requested command
         if (!strcmp(buf, "list")) {
