@@ -136,7 +136,7 @@ void i2c_simple_isr (void) {
             MXC_I2C_ClearTXFIFO(I2C_INTERFACE);
         }
 
-        // Reset state
+        // Reset state - reset only happens after stop interrupt, but repeated starts are allowed and will cause buf overflow
         READ_INDEX = 0;
         WRITE_INDEX = 0;
         WRITE_START = false;
