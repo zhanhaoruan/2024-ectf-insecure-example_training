@@ -5,4 +5,5 @@
 #define COMPONENT_IDS 0x11111124, 0x11111125
 #define COMPONENT_CNT 2
 #define AP_BOOT_MSG "Test boot message"
+#define AUTHENTICATION_MESSAGE "I am waiting"
 #endif
