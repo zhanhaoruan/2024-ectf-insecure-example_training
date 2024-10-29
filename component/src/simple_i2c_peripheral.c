@@ -84,6 +84,25 @@ int i2c_simple_peripheral_init(uint8_t addr) {
     return E_NO_ERROR;
 }
 
+void i2c_reset(int* READ_INDEX, int* WRITE_INDEX, bool* WRITE_START) {
+    // Disable bulk send/receive interrupts
+    MXC_I2C_DisableInt(I2C_INTERFACE, MXC_F_I2C_INTEN0_RX_THD, 0);
+    MXC_I2C_DisableInt(I2C_INTERFACE, MXC_F_I2C_INTEN0_TX_THD, 0);
+
+    // Clear FIFOs if full
+    if (MXC_I2C_GetRXFIFOAvailable(I2C_INTERFACE) != 0) {
+        MXC_I2C_ClearRXFIFO(I2C_INTERFACE);
+    }
+    if (MXC_I2C_GetTXFIFOAvailable(I2C_INTERFACE) != 8) {
+        MXC_I2C_ClearTXFIFO(I2C_INTERFACE);
+    }
+
+    // Reset state - reset only happens after stop interrupt, but repeated starts are allowed and will cause buf overflow
+    *READ_INDEX = 0;
+    *WRITE_INDEX = 0;
+    *WRITE_START = false;
+}
+
 /**
  * @brief ISR for the I2C Peripheral
  * 
@@ -117,7 +136,7 @@ void i2c_simple_isr (void) {
             }
             else {
                 if (I2C_REGS_LEN[ACTIVE_REG] < WRITE_INDEX) {
-                    WRITE_INDEX = 0;
+                    i2c_reset(&READ_INDEX, &WRITE_INDEX, &WRITE_START);
                     printf("Error receiving the buffer\n");
                 } else {
                     WRITE_INDEX += MXC_I2C_ReadRXFIFO(I2C_INTERFACE,
@@ -162,7 +181,8 @@ void i2c_simple_isr (void) {
         if (ACTIVE_REG <= MAX_REG) {
 
             if (I2C_REGS_LEN[ACTIVE_REG] < READ_INDEX) {
-                READ_INDEX = 0;
+                i2c_reset(&READ_INDEX, &WRITE_INDEX, &WRITE_START);
+                printf("Error sending the buffer\n");
             } else {
                 READ_INDEX += MXC_I2C_WriteTXFIFO(I2C_INTERFACE,
                     (volatile unsigned char*)&I2C_REGS[ACTIVE_REG][READ_INDEX],
@@ -228,7 +248,7 @@ void i2c_simple_isr (void) {
             }
             else {
                 if (I2C_REGS_LEN[ACTIVE_REG] < WRITE_INDEX) {
-                    WRITE_INDEX = 0;
+                    i2c_reset(&READ_INDEX, &WRITE_INDEX, &WRITE_START);
                     printf("Error receiving the buffer\n");
                 } else {
                     WRITE_INDEX += MXC_I2C_ReadRXFIFO(I2C_INTERFACE,
