@@ -116,9 +116,14 @@ void i2c_simple_isr (void) {
                     MXC_I2C_GetRXFIFOAvailable(I2C_INTERFACE));
             }
             else {
-                WRITE_INDEX += MXC_I2C_ReadRXFIFO(I2C_INTERFACE,
-                    &I2C_REGS[ACTIVE_REG][WRITE_INDEX],
-                    I2C_REGS_LEN[ACTIVE_REG]-WRITE_INDEX);
+                if (I2C_REGS_LEN[ACTIVE_REG] < WRITE_INDEX) {
+                    WRITE_INDEX = 0;
+                    printf("Error receiving the buffer\n");
+                } else {
+                    WRITE_INDEX += MXC_I2C_ReadRXFIFO(I2C_INTERFACE,
+                        &I2C_REGS[ACTIVE_REG][WRITE_INDEX],
+                        I2C_REGS_LEN[ACTIVE_REG]-WRITE_INDEX);
+                }
             }
         } else {
             MXC_I2C_ClearRXFIFO(I2C_INTERFACE);
@@ -155,9 +160,14 @@ void i2c_simple_isr (void) {
         // 8 byte FIFO length by default
         // More data is needed within the FIFO
         if (ACTIVE_REG <= MAX_REG) {
-            READ_INDEX += MXC_I2C_WriteTXFIFO(I2C_INTERFACE,
-                (volatile unsigned char*)&I2C_REGS[ACTIVE_REG][READ_INDEX],
-                I2C_REGS_LEN[ACTIVE_REG]-READ_INDEX);
+
+            if (I2C_REGS_LEN[ACTIVE_REG] < READ_INDEX) {
+                READ_INDEX = 0;
+            } else {
+                READ_INDEX += MXC_I2C_WriteTXFIFO(I2C_INTERFACE,
+                    (volatile unsigned char*)&I2C_REGS[ACTIVE_REG][READ_INDEX],
+                    I2C_REGS_LEN[ACTIVE_REG]-READ_INDEX);
+            }
             if (I2C_REGS_LEN[ACTIVE_REG]-1 == READ_INDEX) {
                 MXC_I2C_DisableInt(I2C_INTERFACE, MXC_F_I2C_INTEN0_TX_THD, 0);
             }
@@ -217,9 +227,14 @@ void i2c_simple_isr (void) {
                     MXC_I2C_GetRXFIFOAvailable(I2C_INTERFACE));
             }
             else {
-                WRITE_INDEX += MXC_I2C_ReadRXFIFO(I2C_INTERFACE,
-                    &I2C_REGS[ACTIVE_REG][WRITE_INDEX],
-                    I2C_REGS_LEN[ACTIVE_REG]-WRITE_INDEX);
+                if (I2C_REGS_LEN[ACTIVE_REG] < WRITE_INDEX) {
+                    WRITE_INDEX = 0;
+                    printf("Error receiving the buffer\n");
+                } else {
+                    WRITE_INDEX += MXC_I2C_ReadRXFIFO(I2C_INTERFACE,
+                        &I2C_REGS[ACTIVE_REG][WRITE_INDEX],
+                        I2C_REGS_LEN[ACTIVE_REG]-WRITE_INDEX);
+                }
             }
         // Clear out FIFO if invalid register specified
         } else {
