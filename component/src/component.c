@@ -181,7 +181,7 @@ void process_boot() {
         printf("Authentication Failed\n");
         return;
     }
-    uint8_t len = strlen(COMPONENT_BOOT_MSG) + 1;
+    len = strlen(COMPONENT_BOOT_MSG) + 1;
     memcpy((void*)transmit_buffer, COMPONENT_BOOT_MSG, len);
     send_packet_and_ack(len, transmit_buffer);
     // Call the boot function
