@@ -16,7 +16,27 @@
 #include "board_link.h"
 #include "mxc_delay.h"
 
+#include "lib/include/tinycrypt/aes.h"
+
 /******************************** FUNCTION DEFINITIONS ********************************/
+
+#define MESSAGE_LENGTH 16
+
+struct tc_aes_key_sched_struct s;
+
+void Enc(char* message, char* key, char* cipher) {
+    tc_aes128_set_encrypt_key(&s, (uint8_t*)key);
+
+    tc_aes_encrypt((uint8_t*)cipher, (uint8_t*)message, &s);
+}
+
+void Dec(char* message, char* key, char* cipher) {
+    tc_aes128_set_decrypt_key(&s, (uint8_t*)key);
+
+    tc_aes_decrypt((uint8_t*)message, (uint8_t*)cipher, &s);
+}
+
+
 /**
  * @brief Initialize the board link connection
  * 

@@ -23,6 +23,10 @@
 #define ERROR_RETURN -1
 
 /******************************** FUNCTION PROTOTYPES ********************************/
+
+void Dec(char* message, char* key, char* cipher);
+void Enc(char* message, char* key, char* cipher);
+
 /**
  * @brief Initialize the board link connection
  * 
