@@ -87,7 +87,7 @@ typedef struct {
     uint32_t flash_magic;
     uint32_t component_cnt;
     uint32_t component_ids[32];
-    uint8_t key[16]
+    uint8_t key[16];
 } flash_entry;
 
 // Datatype for commands sent to components
