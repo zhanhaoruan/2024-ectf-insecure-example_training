@@ -24,11 +24,15 @@ void XOR(char*oprand1, char* operand2, char* dest,int length){
 
 void key_update(char* random, char* old_key){
     /*
-    1. XOR the old key with the random, which passed in from the new_key_buffer
-    2. Write the result of this XOR to the old_key location
+    
+    XOR the old key with the random, which passed in from the new_key_buffer
+    Write the result of this XOR to the old_key location
     return
     */
-    ;
+    char new_key[16];
+    new_key = old_key ^ random;
+    strncpy(old_key, new_key, 16);
+    return;
 }
 
 void gen_random(char* buffer, int length){
