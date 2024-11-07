@@ -16,7 +16,7 @@
 #include "board_link.h"
 #include "mxc_delay.h"
 
-#include "lib/include/tinycrypt/aes.h"
+#include "tinycrypt/lib/include/tinycrypt/aes.h"
 
 /******************************** FUNCTION DEFINITIONS ********************************/
 
