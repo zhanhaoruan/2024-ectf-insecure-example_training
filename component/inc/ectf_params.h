@@ -5,4 +5,5 @@
 #define ATTESTATION_LOC "McLean"
 #define ATTESTATION_DATE "08/08/08"
 #define ATTESTATION_CUSTOMER "Fritz"
+#define AUTHENTICATION_MESSAGE "I am waiting"
 #endif

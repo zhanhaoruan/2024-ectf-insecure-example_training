@@ -71,6 +71,18 @@
     ],
     "C_Cpp.default.forcedInclude": [
         "${workspaceFolder}/build/project_defines.h"
-    ]
+    ],
+    "files.associations": {
+        "aes.h": "c",
+        "ectf_params.h": "c",
+        "mxc_delay.h": "c",
+        "simple_crypto.h": "c",
+        "host_messaging.h": "c",
+        "simple_flash.h": "c",
+        "board_link.h": "c",
+        "nvic_table.h": "c",
+        "mxc_device.h": "c",
+        "led.h": "c"
+    }
 }
 

@@ -95,7 +95,8 @@ typedef enum {
     COMPONENT_CMD_SCAN,
     COMPONENT_CMD_VALIDATE,
     COMPONENT_CMD_BOOT,
-    COMPONENT_CMD_ATTEST
+    COMPONENT_CMD_ATTEST,
+    COMPONENT_CMD_START_AUTH
 } component_cmd_t;
 
 /********************************* GLOBAL VARIABLES **********************************/
@@ -188,143 +189,9 @@ void init() {
     board_link_init();
 }
 
-// Send a command to a component and receive the result
-int issue_cmd(i2c_addr_t addr, uint8_t* transmit, uint8_t* receive) {
-    // Send message
-    int result = send_packet(addr, sizeof(uint8_t), transmit);
-    if (result == ERROR_RETURN) {
-        return ERROR_RETURN;
-    }
-    
-    // Receive message
-    int len = poll_and_receive_packet(addr, receive);
-    if (len == ERROR_RETURN) {
-        return ERROR_RETURN;
-    }
-    return len;
+bool Auth_AP() {
+    return true;
 }
-
-/******************************** COMPONENT COMMS ********************************/
-
-int scan_components() {
-    // Print out provisioned component IDs
-    for (unsigned i = 0; i < flash_status.component_cnt; i++) {
-        print_info("P>0x%08x\n", flash_status.component_ids[i]);
-    }
-
-    // Buffers for board link communication
-    uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
-    uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
-
-    // Scan scan command to each component 
-    for (i2c_addr_t addr = 0x8; addr < 0x78; addr++) {
-        // I2C Blacklist:
-        // 0x18, 0x28, and 0x36 conflict with separate devices on MAX78000FTHR
-        if (addr == 0x18 || addr == 0x28 || addr == 0x36) {
-            continue;
-        }
-
-        // Create command message 
-        command_message* command = (command_message*) transmit_buffer;
-        command->opcode = COMPONENT_CMD_SCAN;
-        
-        // Send out command and receive result
-        int len = issue_cmd(addr, transmit_buffer, receive_buffer);
-
-        // Success, device is present
-        if (len > 0) {
-            scan_message* scan = (scan_message*) receive_buffer;
-            print_info("F>0x%08x\n", scan->component_id);
-        }
-    }
-    print_success("List\n");
-    return SUCCESS_RETURN;
-}
-
-int validate_components() {
-    // Buffers for board link communication
-    uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
-    uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
-
-    // Send validate command to each component
-    for (unsigned i = 0; i < flash_status.component_cnt; i++) {
-        // Set the I2C address of the component
-        i2c_addr_t addr = component_id_to_i2c_addr(flash_status.component_ids[i]);
-
-        // Create command message
-        command_message* command = (command_message*) transmit_buffer;
-        command->opcode = COMPONENT_CMD_VALIDATE;
-        
-        // Send out command and receive result
-        int len = issue_cmd(addr, transmit_buffer, receive_buffer);
-        if (len == ERROR_RETURN) {
-            print_error("Could not validate component\n");
-            return ERROR_RETURN;
-        }
-
-        validate_message* validate = (validate_message*) receive_buffer;
-        // Check that the result is correct
-        if (validate->component_id != flash_status.component_ids[i]) {
-            print_error("Component ID: 0x%08x invalid\n", flash_status.component_ids[i]);
-            return ERROR_RETURN;
-        }
-    }
-    return SUCCESS_RETURN;
-}
-
-int boot_components() {
-    // Buffers for board link communication
-    uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
-    uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
-
-    // Send boot command to each component
-    for (unsigned i = 0; i < flash_status.component_cnt; i++) {
-        // Set the I2C address of the component
-        i2c_addr_t addr = component_id_to_i2c_addr(flash_status.component_ids[i]);
-        
-        // Create command message
-        command_message* command = (command_message*) transmit_buffer;
-        command->opcode = COMPONENT_CMD_BOOT;
-        
-        // Send out command and receive result
-        int len = issue_cmd(addr, transmit_buffer, receive_buffer);
-        if (len == ERROR_RETURN) {
-            print_error("Could not boot component\n");
-            return ERROR_RETURN;
-        }
-
-        // Print boot message from component
-        print_info("0x%08x>%s\n", flash_status.component_ids[i], receive_buffer);
-    }
-    return SUCCESS_RETURN;
-}
-
-int attest_component(uint32_t component_id) {
-    // Buffers for board link communication
-    uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
-    uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
-
-    // Set the I2C address of the component
-    i2c_addr_t addr = component_id_to_i2c_addr(component_id);
-
-    // Create command message
-    command_message* command = (command_message*) transmit_buffer;
-    command->opcode = COMPONENT_CMD_ATTEST;
-
-    // Send out command and receive result
-    int len = issue_cmd(addr, transmit_buffer, receive_buffer);
-    if (len == ERROR_RETURN) {
-        print_error("Could not attest component\n");
-        return ERROR_RETURN;
-    }
-
-    // Print out attestation data 
-    print_info("C>0x%08x\n", component_id);
-    print_info("%s", receive_buffer);
-    return SUCCESS_RETURN;
-}
-
-/********************************* AP LOGIC ***********************************/
 
 // Boot sequence
 // YOUR DESIGN MUST NOT CHANGE THIS FUNCTION
@@ -384,6 +251,126 @@ void boot() {
     #endif
 }
 
+// Send a command to a component and receive the result
+int issue_cmd(i2c_addr_t addr, uint8_t* transmit, uint8_t* receive) {
+    // Send message
+    int result = send_packet(addr, sizeof(uint8_t), transmit);
+    if (result == ERROR_RETURN) {
+        return ERROR_RETURN;
+    }
+    
+    // Receive message
+    int len = poll_and_receive_packet(addr, receive);
+    if (len == ERROR_RETURN) {
+        return ERROR_RETURN;
+    }
+    return len;
+}
+
+/******************************** COMPONENT COMMS ********************************/
+
+int scan_components() {
+    // Print out provisioned component IDs
+    for (unsigned i = 0; i < flash_status.component_cnt; i++) {
+        print_info("P>0x%08x\n", flash_status.component_ids[i]);
+    }
+
+    // Buffers for board link communication
+    uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
+    uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
+
+    // Scan scan command to each component 
+    for (i2c_addr_t addr = 0x8; addr < 0x78; addr++) {
+        // I2C Blacklist:
+        // 0x18, 0x28, and 0x36 conflict with separate devices on MAX78000FTHR
+        if (addr == 0x18 || addr == 0x28 || addr == 0x36) {
+            continue;
+        }
+
+        // Create command message 
+        command_message* command = (command_message*) transmit_buffer;
+        command->opcode = COMPONENT_CMD_SCAN;
+        
+        // Send out command and receive result
+        int len = issue_cmd(addr, transmit_buffer, receive_buffer);
+
+        // Success, device is present
+        if (len > 0) {
+            scan_message* scan = (scan_message*) receive_buffer;
+            print_info("F>0x%08x\n", scan->component_id);
+        }
+    }
+    print_success("List\n");
+    return SUCCESS_RETURN;
+}
+
+
+
+int boot_components() {
+    // Buffers for board link communication
+    uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
+    uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
+
+    // Send boot command to each component
+    for (unsigned i = 0; i < flash_status.component_cnt; i++) {
+        // Set the I2C address of the component
+        i2c_addr_t addr = component_id_to_i2c_addr(flash_status.component_ids[i]);
+        
+        // Create command message
+        command_message* command = (command_message*) transmit_buffer;
+        command->opcode = COMPONENT_CMD_BOOT;
+
+        // Send out command and receive result
+        int len = issue_cmd(addr, transmit_buffer, receive_buffer);
+        if (len == ERROR_RETURN) {
+            print_error("Could not boot component\n");
+            return ERROR_RETURN;
+        }
+
+        // TODO: wtf?
+        if (strcmp(receive_buffer, AUTHENTICATION_MESSAGE) == 0) {
+            if(Auth_AP()) {
+                boot();
+                // Print boot message from component
+                print_info("0x%08x>%s\n", flash_status.component_ids[i], receive_buffer);
+                return SUCCESS_RETURN;
+            } else{
+                return ERROR_RETURN;
+            }
+        } else {
+            return ERROR_RETURN;
+        }
+    }
+    
+}
+
+int attest_component(uint32_t component_id) {
+    // Buffers for board link communication
+    uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
+    uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
+
+    // Set the I2C address of the component
+    i2c_addr_t addr = component_id_to_i2c_addr(component_id);
+
+    // Create command message
+    command_message* command = (command_message*) transmit_buffer;
+    command->opcode = COMPONENT_CMD_ATTEST;
+
+    // Send out command and receive result
+    int len = issue_cmd(addr, transmit_buffer, receive_buffer);
+    if (len == ERROR_RETURN) {
+        print_error("Could not attest component\n");
+        return ERROR_RETURN;
+    }
+
+    // Print out attestation data 
+    print_info("C>0x%08x\n", component_id);
+    print_info("%s", receive_buffer);
+    return SUCCESS_RETURN;
+}
+
+/********************************* AP LOGIC ***********************************/
+
 // Compare the entered PIN to the correct PIN
 int validate_pin() {
     char buf[50];
@@ -408,14 +395,60 @@ int validate_token() {
     return ERROR_RETURN;
 }
 
+int validate_components() {
+    // Buffers for board link communication
+    uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
+    uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
+
+    // "challenge"
+    char* challegeStr = "challenge";
+    
+
+    
+    // Send validate command to each component
+    for (unsigned i = 0; i < flash_status.component_cnt; i++) {
+        // Set the I2C address of the component
+        i2c_addr_t addr = component_id_to_i2c_addr(flash_status.component_ids[i]);
+
+        // Create command message // maybe modify
+        command_message* command = (command_message*) transmit_buffer;
+        command->opcode = COMPONENT_CMD_START_AUTH;
+        
+        // Send out command and receive result
+        // issue_cmd should contain challenge string
+        int len = issue_cmd(addr, transmit_buffer, receive_buffer);
+        
+        if (len == ERROR_RETURN) {
+            print_error("Could not validate component\n");
+            return ERROR_RETURN;
+        }
+
+        if(!Auth_AP()) {
+            return ERROR_RETURN;
+        }
+
+        // validate_message* validate = (validate_message*) receive_buffer;
+        // // Check that the result is correct
+
+        // // if validate -> answer != answer
+        // if (validate->component_id != flash_status.component_ids[i]) {
+        //     print_error("Component ID: 0x%08x invalid\n", flash_status.component_ids[i]);
+        //     return ERROR_RETURN;
+        // }
+    }
+    return SUCCESS_RETURN;
+}
+
+
 // Boot the components and board if the components validate
 void attempt_boot() {
-    // need to verify 
-    if (validate_components()) {
-        print_error("Components could not be validated\n");
-        return;
-    }
-    print_debug("All Components validated\n");
+    // if (validate_components()) {
+    //     print_error("Components could not be validated\n");
+    //     return;
+    // }
+
+    // print_debug("All Components validated\n");
+
     if (boot_components()) {
         print_error("Failed to boot all components\n");
         return;
@@ -434,6 +467,13 @@ void attempt_boot() {
     print_success("Boot\n");
     // Boot
     boot();
+
+    // attempt_auth();
+
+}
+
+void attempt_auth(uint32_t c_id) {
+    // send packet to component
 }
 
 // Replace a component if the PIN is correct
