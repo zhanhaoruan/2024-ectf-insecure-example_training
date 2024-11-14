@@ -62,4 +62,6 @@ typedef uint8_t i2c_addr_t;
 */
 int i2c_simple_peripheral_init(i2c_addr_t addr);
 
+void i2c_reset(int* READ_INDEX, int* WRITE_INDEX, bool* WRITE_START);
+
 #endif
