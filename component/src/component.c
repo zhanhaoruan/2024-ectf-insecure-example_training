@@ -151,6 +151,14 @@ void boot() {
 void component_process_cmd() {
     command_message* command = (command_message*) receive_buffer;
 
+    printf("RECEIVE_BUFFER: %s", receive_buffer);
+    
+    // ec = encrypt(c);
+
+    // secure_send(ec);
+
+
+    
     // Output to application processor dependent on command received
     switch (command->opcode) {
     case COMPONENT_CMD_BOOT:

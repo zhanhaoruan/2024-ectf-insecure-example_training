@@ -137,11 +137,13 @@ int secure_send(uint8_t address, uint8_t* buffer, uint8_t len) {
  * This function must be implemented by your team to align with the security requirements.
 */
 int secure_receive(i2c_addr_t address, uint8_t* buffer) {
+    poll_and_receive_packet(address, buffer);
+    printf("IN SECURE RECEIVE %s", buffer);
     return poll_and_receive_packet(address, buffer);
 }
 
 /**
- * @brief Get Provisioned IDs
+ * @brief Get Provisioned 
  * 
  * @param uint32_t* buffer
  * 
@@ -192,6 +194,7 @@ void init() {
 int issue_cmd(i2c_addr_t addr, uint8_t* transmit, uint8_t* receive) {
     // Send message
     int result = send_packet(addr, sizeof(uint8_t), transmit);
+
     if (result == ERROR_RETURN) {
         return ERROR_RETURN;
     }
@@ -242,6 +245,7 @@ int scan_components() {
 }
 
 int validate_components() {
+    
     // Buffers for board link communication
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
@@ -264,6 +268,7 @@ int validate_components() {
 
         validate_message* validate = (validate_message*) receive_buffer;
         // Check that the result is correct
+        
         if (validate->component_id != flash_status.component_ids[i]) {
             print_error("Component ID: 0x%08x invalid\n", flash_status.component_ids[i]);
             return ERROR_RETURN;
@@ -277,6 +282,18 @@ int boot_components() {
     uint8_t receive_buffer[MAX_I2C_MESSAGE_LEN];
     uint8_t transmit_buffer[MAX_I2C_MESSAGE_LEN];
 
+     char* data = "CHALLENGE";
+    uint8_t ciphertext[BLOCK_SIZE];
+    uint8_t key[KEY_SIZE];
+    
+    // Zero out the key
+    bzero(key, BLOCK_SIZE);
+
+    // Encrypt example data and print out
+    encrypt_sym((uint8_t*)data, BLOCK_SIZE, key, ciphertext); 
+    
+    printf("encryptedChallenge: " + encryptedChallenge);
+
     // Send boot command to each component
     for (unsigned i = 0; i < flash_status.component_cnt; i++) {
         // Set the I2C address of the component
@@ -288,6 +305,8 @@ int boot_components() {
         
         // Send out command and receive result
         int len = issue_cmd(addr, transmit_buffer, receive_buffer);
+
+        int challengeSend = issue_cmd(addr, transmit_buffer1, receive_buffer1);
         if (len == ERROR_RETURN) {
             print_error("Could not boot component\n");
             return ERROR_RETURN;

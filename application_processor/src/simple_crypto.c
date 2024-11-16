@@ -11,7 +11,7 @@
  * @copyright Copyright (c) 2024 The MITRE Corporation
  */
 
-#if CRYPTO_EXAMPLE
+// #if CRYPTO_EXAMPLE
 
 #include "simple_crypto.h"
 #include <stdint.h>

@@ -1,0 +1,6 @@
+{
+  "files.associations": {
+    "board_link.h": "c",
+    "string.h": "c"
+  }
+}
