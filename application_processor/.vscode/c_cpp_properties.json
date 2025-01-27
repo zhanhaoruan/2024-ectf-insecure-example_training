@@ -6,7 +6,7 @@
                 "${default}"
             ],
             "defines": [
-                "${default}"
+                "${default}"    
             ],
             "intelliSenseMode": "gcc-arm",
             "compilerPath": "${config:ARM_GCC_path}/bin/arm-none-eabi-gcc.exe",
